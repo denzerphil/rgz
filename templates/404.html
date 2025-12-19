@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block title %}Страница не найдена{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-code">404</div>
+    <h1><i class="fas fa-exclamation-triangle"></i> Страница не найдена</h1>
+    <p>Запрашиваемая страница не существует или была перемещена.</p>
+    <div class="error-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> На главную
+        </a>
+        <a href="javascript:history.back()" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    </div>
+</div>
+
+<style>
+.error-page {
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.error-code {
+    font-size: 8rem;
+    font-weight: bold;
+    color: #e0e0e0;
+    line-height: 1;
+    margin-bottom: 20px;
+}
+
+.error-page h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.error-page p {
+    color: #666;
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.error-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .error-code {
+        font-size: 5rem;
+    }
+}
+</style>
+{% endblock %}

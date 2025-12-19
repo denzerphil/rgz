@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}Добавить инициативу{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2><i class="fas fa-plus-circle"></i> Предложить новую инициативу</h2>
+    
+    <form id="addInitiativeForm">
+        <div class="form-group">
+            <label for="title">Название инициативы *</label>
+            <input type="text" id="title" name="title" required 
+                   placeholder="Краткое название (до 100 символов)"
+                   maxlength="100">
+            <div class="error" id="titleError"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Описание *</label>
+            <textarea id="description" name="description" rows="6" required
+                      placeholder="Подробное описание вашего предложения..."></textarea>
+            <div class="error" id="descError"></div>
+        </div>
+        
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Опубликовать
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Отмена
+            </a>
+        </div>
+    </form>
+    
+    <div class="form-tips">
+        <h3><i class="fas fa-lightbulb"></i> Советы:</h3>
+        <ul>
+            <li>Будьте конкретны в описании</li>
+            <li>Предлагайте реализуемые идеи</li>
+            <li>Инициативы с оценкой ниже -10 автоматически удаляются</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+document.getElementById('addInitiativeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    
+    // Валидация
+    let isValid = true;
+    
+    if (title.length < 5) {
+        document.getElementById('titleError').textContent = 'Название должно быть не менее 5 символов';
+        isValid = false;
+    } else {
+        document.getElementById('titleError').textContent = '';
+    }
+    
+    if (description.length < 20) {
+        document.getElementById('descError').textContent = 'Описание должно быть не менее 20 символов';
+        isValid = false;
+    } else {
+        document.getElementById('descError').textContent = '';
+    }
+    
+    if (!isValid) return;
+    
+    try {
+        const response = await fetch('/api/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, description })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Инициатива успешно добавлена!');
+            window.location.href = '/';
+        } else {
+            alert('Ошибка: ' + data.message);
+        }
+    } catch (error) {
+        alert('Ошибка соединения с сервером');
+    }
+});
+</script>
+{% endblock %}

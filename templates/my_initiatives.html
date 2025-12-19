@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+
+{% block title %}Мои инициативы{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-folder-open"></i> Мои инициативы</h2>
+    <a href="{{ url_for('add_initiative_page') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Новая инициатива
+    </a>
+</div>
+
+{% if initiatives and initiatives|length > 0 %}
+<div class="initiatives-list">
+    {% for init in initiatives %}
+    <div class="initiative-card">
+        <div class="initiative-header">
+            <h3>{{ init.title }}</h3>
+            <div class="initiative-actions">
+                <span class="votes {% if init.votes >= 0 %}positive{% else %}negative{% endif %}">
+                    {{ init.votes }}
+                </span>
+                <button class="btn-icon delete-initiative-btn" data-init-id="{{ init.id }}" 
+                        title="Удалить" {% if init.votes < -10 %}disabled{% endif %}>
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <p>{{ init.description[:150] }}{% if init.description|length > 150 %}...{% endif %}</p>
+        <div class="initiative-footer">
+            <span><i class="fas fa-calendar"></i> {{ init.created_at[:10] }}</span>
+            <span><i class="fas fa-comments"></i> 0 комментариев</span>
+            <span><i class="fas fa-eye"></i> {{ (init.votes + 10)|abs }} просмотров</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    <span>Всего инициатив: {{ initiatives|length }}</span>
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-lightbulb fa-4x"></i>
+    <h3>У вас пока нет инициатив</h3>
+    <p>Предложите свою первую идею!</p>
+    <a href="{{ url_for('add_initiative') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Создать инициативу
+    </a>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-initiative-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.disabled) {
+                alert('Эту инициативу нельзя удалить (набрала менее -10 голосов)');
+                return;
+            }
+            
+            const initiativeId = this.getAttribute('data-init-id');
+            deleteInitiative(initiativeId);
+        });
+    });
+});
+
+async function deleteInitiative(initiativeId) {
+    if (!confirm('Вы уверены, что хотите удалить эту инициативу?')) return;
+    
+    try {
+        const response = await fetch(`/api/initiative/${initiativeId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Инициатива успешно удалена');
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.message);
+        }
+    } catch (error) {
+        alert('Ошибка соединения с сервером');
+    }
+}
+</script>
+{% endblock %}

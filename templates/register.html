@@ -1,0 +1,230 @@
+{% extends "layout.html" %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2><i class="fas fa-user-plus"></i> Регистрация</h2>
+        <p class="auth-subtitle">Создайте аккаунт для предложения инициатив</p>
+
+        {% if error %}
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Логин:</label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="Придумайте логин"
+                       pattern="[A-Za-z0-9_]{3,20}"
+                       title="Только латинские буквы, цифры и подчеркивание (3-20 символов)"
+                       value="{{ request.form.username if request.form }}">
+                <small class="form-help">Латинские буквы, цифры и _ (3-20 символов)</small>
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Пароль:</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Придумайте пароль"
+                       minlength="6"
+                       title="Минимум 6 символов">
+                <small class="form-help">Минимум 6 символов</small>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password"><i class="fas fa-lock"></i> Подтвердите пароль:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required 
+                       placeholder="Повторите пароль">
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+                    <i class="fas fa-user-plus"></i> Зарегистрироваться
+                </button>
+            </div>
+        </form>
+
+        <div class="auth-footer">
+            <p>Уже есть аккаунт? <a href="{{ url_for('login') }}">Войдите</a></p>
+        </div>
+
+        <div class="registration-info">
+            <h4><i class="fas fa-check-circle"></i> После регистрации вы сможете:</h4>
+            <ul>
+                <li>Предлагать свои инициативы</li>
+                <li>Голосовать за предложения других</li>
+                <li>Следить за статусом своих идей</li>
+                <li>Управлять своим профилем</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const registerBtn = document.getElementById('registerBtn');
+    
+    function validatePasswords() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Пароли не совпадают');
+            registerBtn.disabled = true;
+            registerBtn.style.opacity = '0.7';
+            return false;
+        } else {
+            confirmPassword.setCustomValidity('');
+            registerBtn.disabled = false;
+            registerBtn.style.opacity = '1';
+            return true;
+        }
+    }
+    
+    password.addEventListener('input', validatePasswords);
+    confirmPassword.addEventListener('input', validatePasswords);
+    
+    form.addEventListener('submit', function(event) {
+        if (!validatePasswords()) {
+            event.preventDefault();
+            alert('Пароли не совпадают!');
+        }
+    });
+    
+    // Изначальная проверка
+    validatePasswords();
+});
+</script>
+
+<style>
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 20px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 450px;
+}
+
+.auth-subtitle {
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+.form-help {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 12px;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.auth-footer a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.registration-info {
+    margin-top: 30px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2ecc71;
+}
+
+.registration-info h4 {
+    margin-top: 0;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.registration-info ul {
+    margin: 10px 0 0 0;
+    padding-left: 20px;
+}
+
+.registration-info li {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.alert {
+    padding: 12px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+input:invalid {
+    border-color: #e74c3c;
+}
+
+input:valid {
+    border-color: #2ecc71;
+}
+</style>
+{% endblock %}

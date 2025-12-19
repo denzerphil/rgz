@@ -1,0 +1,293 @@
+{% extends "layout.html" %}
+
+{% block title %}Админ-панель{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h2><i class="fas fa-shield-alt"></i> Панель администратора</h2>
+    
+    <div class="admin-tabs">
+        <button class="tab-btn active" data-tab="users">Пользователи</button>
+        <button class="tab-btn" data-tab="initiatives">Инициативы</button>
+        <button class="tab-btn" data-tab="stats">Статистика</button>
+    </div>
+    
+    <!-- Вкладка пользователей -->
+    <div id="usersTab" class="tab-content active">
+        <h3>Управление пользователями</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Логин</th>
+                    <th>Статус</th>
+                    <th>Дата регистрации</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>
+                        <span class="badge {% if user.is_admin %}admin{% else %}user{% endif %}">
+                            {% if user.is_admin %}Админ{% else %}Пользователь{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ user.created_at[:10] }}</td>
+                    <td>
+                        {% if user.id != session.user_id %}
+                            {% if user.is_admin %}
+                            <button class="btn-icon toggle-admin-btn" data-user-id="{{ user.id }}" data-is-admin="1" title="Снять админа">
+                                <i class="fas fa-user-shield"></i>
+                            </button>
+                            {% else %}
+                            <button class="btn-icon toggle-admin-btn" data-user-id="{{ user.id }}" data-is-admin="0" title="Назначить админом">
+                                <i class="fas fa-user-shield"></i>
+                            </button>
+                            {% endif %}
+                            <button class="btn-icon btn-danger delete-user-btn" data-user-id="{{ user.id }}" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        {% else %}
+                            <span class="text-muted">Это вы</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Вкладка инициатив -->
+    <div id="initiativesTab" class="tab-content">
+        <h3>Управление инициативами</h3>
+        <div class="search-box">
+            <input type="text" id="searchInitiatives" placeholder="Поиск по названию или автору..." onkeypress="if(event.keyCode==13) searchInitiatives()">
+            <button class="btn" onclick="searchInitiatives()">Найти</button>
+        </div>
+        
+        <div id="initiativesList">
+            <p class="text-muted">Введите запрос для поиска инициатив</p>
+        </div>
+    </div>
+    
+    <!-- Вкладка статистики -->
+    <div id="statsTab" class="tab-content">
+        <h3>Статистика платформы</h3>
+        <div class="stats-grid">
+            <div class="stat-card large">
+                <div class="stat-number">{{ stats.total_users }}</div>
+                <div class="stat-label">Всего пользователей</div>
+            </div>
+            <div class="stat-card large">
+                <div class="stat-number">{{ stats.total_initiatives }}</div>
+                <div class="stat-label">Всего инициатив</div>
+            </div>
+            <div class="stat-card large">
+                <div class="stat-number">{{ stats.active_initiatives }}</div>
+                <div class="stat-label">Активных инициатив</div>
+            </div>
+            <div class="stat-card large">
+                <div class="stat-number">{{ stats.deleted_initiatives }}</div>
+                <div class="stat-label">Удалено автоматически</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h4>Активность за последние 7 дней</h4>
+            <div class="chart-placeholder">
+                <p><i class="fas fa-chart-line"></i> График активности (для демонстрации)</p>
+                <div class="fake-chart">
+                    <div class="bar" style="height: 80%;"><span>20</span></div>
+                    <div class="bar" style="height: 60%;"><span>15</span></div>
+                    <div class="bar" style="height: 90%;"><span>25</span></div>
+                    <div class="bar" style="height: 40%;"><span>10</span></div>
+                    <div class="bar" style="height: 70%;"><span>18</span></div>
+                    <div class="bar" style="height: 50%;"><span>12</span></div>
+                    <div class="bar" style="height: 85%;"><span>22</span></div>
+                </div>
+                <div class="chart-labels">
+                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Управление вкладками
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчики вкладок
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            showTab(tabName);
+        });
+    });
+    
+    // Обработчики кнопок админки
+    document.querySelectorAll('.toggle-admin-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            toggleAdmin(userId);
+        });
+    });
+    
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            deleteUser(userId);
+        });
+    });
+});
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+// Функции администратора
+async function toggleAdmin(userId) {
+    const response = await fetch(`/api/admin/toggle/${userId}`, { method: 'POST' });
+    const data = await response.json();
+    
+    if (data.success) {
+        location.reload();
+    } else {
+        alert('Ошибка: ' + data.message);
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Вы уверены? Это действие нельзя отменить.')) return;
+    
+    const response = await fetch(`/api/admin/delete/user/${userId}`, { method: 'DELETE' });
+    const data = await response.json();
+    
+    if (data.success) {
+        location.reload();
+    } else {
+        alert('Ошибка: ' + data.message);
+    }
+}
+
+// Поиск инициатив
+async function searchInitiatives() {
+    const query = document.getElementById('searchInitiatives').value;
+    if (!query.trim()) {
+        document.getElementById('initiativesList').innerHTML = 
+            '<p class="text-muted">Введите запрос для поиска инициатив</p>';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        const container = document.getElementById('initiativesList');
+        if (data.initiatives && data.initiatives.length > 0) {
+            container.innerHTML = data.initiatives.map(init => `
+                <div class="initiative-card">
+                    <div class="initiative-header">
+                        <h4>${init.title}</h4>
+                        <span class="votes ${init.votes >= 0 ? 'positive' : 'negative'}">${init.votes}</span>
+                    </div>
+                    <p>Автор: ${init.author} | Дата: ${init.created_at}</p>
+                    <div class="initiative-actions">
+                        <button class="btn btn-sm btn-danger" onclick="deleteInitiativeAdmin(${init.id})">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-muted">Инициативы не найдены</p>';
+        }
+    } catch (error) {
+        document.getElementById('initiativesList').innerHTML = 
+            '<p class="error">Ошибка при поиске</p>';
+    }
+}
+
+async function deleteInitiativeAdmin(initiativeId) {
+    if (!confirm('Удалить эту инициативу?')) return;
+    
+    const response = await fetch(`/api/initiative/${initiativeId}`, {
+        method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        searchInitiatives(); // Обновляем список
+    } else {
+        alert('Ошибка: ' + data.message);
+    }
+}
+</script>
+
+<style>
+.text-muted {
+    color: #888;
+    font-style: italic;
+}
+
+.chart-placeholder {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.fake-chart {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 150px;
+    gap: 15px;
+    margin: 20px 0 10px 0;
+}
+
+.fake-chart .bar {
+    width: 40px;
+    background: #3498db;
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5px;
+}
+
+.fake-chart .bar span {
+    position: relative;
+    top: -20px;
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.chart-labels span {
+    width: 40px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Инициативы{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <!-- Логотип и название (кликабельное) -->
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <div class="logo">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>Инициативы</h1>
+                    <p class="student-info">Филиппов Денис Максимович | ФБИ-33</p>
+                </div>
+            </a>
+
+            <!-- Меню навигации -->
+            <div class="nav-menu">
+                {% if session.user %}
+                    <div class="user-dropdown">
+                        <button class="user-btn">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ session.user }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="{{ url_for('profile_page') }}">
+                                <i class="fas fa-user"></i> Профиль
+                            </a>
+                            <a href="{{ url_for('my_initiatives_page') }}">
+                                <i class="fas fa-list"></i> Мои инициативы
+                            </a>
+                            <a href="{{ url_for('add_initiative_page') }}">
+                                <i class="fas fa-plus-circle"></i> Новая инициатива
+                            </a>
+                            {% if session.user == 'admin' or session.user == 'user' %}
+                            <a href="{{ url_for('admin_panel_page') }}">
+                                <i class="fas fa-shield-alt"></i> Админ-панель
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('logout') }}" class="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> Выйти
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="auth-buttons">
+                        <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-sign-in-alt"></i> Вход
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-user-plus"></i> Регистрация
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Мобильное меню -->
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Мобильное меню (скрытое) -->
+    <div class="mobile-menu">
+        {% if session.user %}
+            <a href="{{ url_for('profile_page') }}">
+                <i class="fas fa-user"></i> Профиль
+            </a>
+            <a href="{{ url_for('my_initiatives_page') }}">
+                <i class="fas fa-list"></i> Мои инициативы
+            </a>
+            <a href="{{ url_for('add_initiative_page') }}">
+                <i class="fas fa-plus-circle"></i> Новая инициатива
+            </a>
+            {% if session.user == 'admin' or session.user == 'user' %}
+            <a href="{{ url_for('admin_panel_page') }}">
+                <i class="fas fa-shield-alt"></i> Админ-панель
+            </a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Выйти
+            </a>
+        {% else %}
+            <a href="{{ url_for('login') }}">
+                <i class="fas fa-sign-in-alt"></i> Вход
+            </a>
+            <a href="{{ url_for('register') }}">
+                <i class="fas fa-user-plus"></i> Регистрация
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Основное содержимое -->
+    <main class="container main-content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h3><i class="fas fa-lightbulb"></i> Платформа Инициатив</h3>
+                <p>Площадка для предложения и обсуждения идей</p>
+                <p class="copyright">© 2025 Все права защищены</p>
+            </div>
+            <div class="footer-section">
+                <h4>Навигация</h4>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Главная</a></li>
+                    {% if session.user %}
+                    <li><a href="{{ url_for('add_initiative_page') }}">Новая инициатива</a></li>
+                    <li><a href="{{ url_for('my_initiatives_page') }}">Мои инициативы</a></li>
+                    {% else %}
+                    <li><a href="{{ url_for('login') }}">Войти в систему</a></li>
+                    <li><a href="{{ url_for('register') }}">Регистрация</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Контакты</h4>
+                <p><i class="fas fa-user-graduate"></i> Филиппов Денис Максимович</p>
+                <p><i class="fas fa-users"></i> Группа ФБИ-33</p>
+                <p><i class="fas fa-book"></i> Вариант 23</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Мобильное меню
+        document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
+            document.querySelector('.mobile-menu').classList.toggle('active');
+            this.innerHTML = this.innerHTML.includes('bars') ? 
+                '<i class="fas fa-times"></i>' : 
+                '<i class="fas fa-bars"></i>';
+        });
+
+        // Закрытие мобильного меню при клике на ссылку
+        document.querySelectorAll('.mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelector('.mobile-menu').classList.remove('active');
+                document.querySelector('.mobile-menu-btn').innerHTML = '<i class="fas fa-bars"></i>';
+            });
+        });
+
+        // Закрытие выпадающего меню при клике вне его
+        document.addEventListener('click', function(event) {
+            const userBtn = document.querySelector('.user-btn');
+            const dropdown = document.querySelector('.dropdown-content');
+            
+            if (userBtn && dropdown && !userBtn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Выпадающее меню пользователя
+        document.querySelectorAll('.user-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = this.nextElementSibling;
+                dropdown.classList.toggle('show');
+            });
+        });
+    </script>
+</body>
+</html>

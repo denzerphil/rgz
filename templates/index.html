@@ -1,0 +1,443 @@
+{% extends "layout.html" %}
+
+{% block title %}Главная - Платформа инициатив{% endblock %}
+
+{% block content %}
+<!-- Герой-секция -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1><i class="fas fa-lightbulb"></i> Платформа для ваших идей</h1>
+        <p class="hero-description">
+            Предлагайте, обсуждайте и голосуйте за инициативы. 
+            Вместе мы можем изменить мир к лучшему!
+        </p>
+        {% if not session.user %}
+        <div class="hero-actions">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-rocket"></i> Присоединиться
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </a>
+        </div>
+        {% else %}
+        <div class="hero-actions">
+            <a href="{{ url_for('add_initiative_page') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle"></i> Предложить идею
+            </a>
+            <a href="{{ url_for('my_initiatives_page') }}" class="btn btn-outline btn-lg">
+                <i class="fas fa-list"></i> Мои инициативы
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="hero-stats">
+        <div class="stat-item">
+            <div class="stat-number">{{ total }}</div>
+            <div class="stat-label">Всего инициатив</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ (initiatives|selectattr('votes', 'gt', 0)|list)|length }}</div>
+            <div class="stat-label">Популярных</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ page }}</div>
+            <div class="stat-label">Текущая страница</div>
+        </div>
+    </div>
+</div>
+
+<!-- Фильтры и поиск -->
+<div class="filters-section">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Поиск инициатив...">
+    </div>
+    <div class="filters">
+        <select id="sortSelect" class="filter-select">
+            <option value="newest">Сначала новые</option>
+            <option value="popular">Сначала популярные</option>
+            <option value="controversial">Сначала спорные</option>
+        </select>
+        <button class="btn btn-outline" id="applyFilters">
+            <i class="fas fa-filter"></i> Применить
+        </button>
+    </div>
+</div>
+
+<!-- Сетка инициатив -->
+{% if initiatives %}
+<div class="initiatives-grid" id="initiativesContainer">
+    {% for init in initiatives %}
+    <div class="initiative-card" data-id="{{ init.id }}">
+        <div class="initiative-header">
+            <h3>{{ init.title }}</h3>
+            <span class="votes-badge {% if init.votes >= 0 %}positive{% else %}negative{% endif %}">
+                {{ init.votes }}
+            </span>
+        </div>
+        <p class="initiative-description">
+            {{ init.description[:150] }}{% if init.description|length > 150 %}...{% endif %}
+        </p>
+        <div class="initiative-footer">
+            <div class="initiative-meta">
+                <span title="Автор">
+                    <i class="fas fa-user"></i> {{ init.username }}
+                </span>
+                <span title="Дата создания">
+                    <i class="fas fa-calendar"></i> {{ init.created_at[:10] }}
+                </span>
+            </div>
+            <div class="initiative-actions">
+                {% if session.user %}
+                <div class="vote-buttons">
+                    <button class="btn-vote up" data-init-id="{{ init.id }}" data-vote-value="1">
+                        <i class="fas fa-thumbs-up"></i> За
+                    </button>
+                    <button class="btn-vote down" data-init-id="{{ init.id }}" data-vote-value="-1">
+                        <i class="fas fa-thumbs-down"></i> Против
+                    </button>
+                </div>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline">
+                    <i class="fas fa-sign-in-alt"></i> Войдите, чтобы голосовать
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Пагинация -->
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="?page={{ page - 1 }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    {% endif %}
+    
+    <span class="page-info">
+        Страница <strong>{{ page }}</strong> из <strong>{{ (total / limit)|round(0, 'ceil')|int }}</strong>
+    </span>
+    
+    {% if page * limit < total %}
+        <a href="?page={{ page + 1 }}" class="btn btn-outline">
+            Вперед <i class="fas fa-arrow-right"></i>
+        </a>
+    {% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-inbox"></i>
+    <h3>Инициативы не найдены</h3>
+    <p>Будьте первым, кто предложит идею!</p>
+    {% if session.user %}
+    <a href="{{ url_for('add_initiative_page') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Создать первую инициативу
+    </a>
+    {% else %}
+    <a href="{{ url_for('register') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Зарегистрируйтесь, чтобы начать
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Информационный блок -->
+<div class="info-section">
+    <div class="info-card">
+        <i class="fas fa-vote-yea"></i>
+        <h4>Как работает голосование?</h4>
+        <p>Каждый пользователь может голосовать за или против любой инициативы. Инициативы с рейтингом ниже -10 автоматически удаляются.</p>
+    </div>
+    <div class="info-card">
+        <i class="fas fa-lightbulb"></i>
+        <h4>Как предложить идею?</h4>
+        <p>Зарегистрируйтесь и нажмите "Предложить идею". Опишите свою инициативу подробно и привлекательно.</p>
+    </div>
+    <div class="info-card">
+        <i class="fas fa-chart-line"></i>
+        <h4>Статистика и аналитика</h4>
+        <p>Следите за популярностью своих идей и общайтесь с сообществом для улучшения предложений.</p>
+    </div>
+</div>
+
+<style>
+/* Стили для главной страницы */
+.hero-section {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+    backdrop-filter: blur(20px);
+    border-radius: var(--border-radius);
+    padding: 50px;
+    margin-bottom: 40px;
+    box-shadow: var(--box-shadow);
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-description {
+    font-size: 1.2rem;
+    color: var(--gray);
+    max-width: 600px;
+    margin: 0 auto 30px;
+    line-height: 1.7;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+}
+
+.btn-lg {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+}
+
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding-top: 30px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: var(--gray);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.filters-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 300px;
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 2px solid var(--gray-light);
+    border-radius: 50px;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 12px 20px;
+    border: 2px solid var(--gray-light);
+    border-radius: 50px;
+    font-size: 15px;
+    background: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.page-info {
+    font-size: 16px;
+    color: var(--gray);
+    font-weight: 500;
+}
+
+.info-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 50px;
+}
+
+.info-card {
+    background: white;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.info-card i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+}
+
+.info-card h4 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: var(--dark);
+}
+
+.info-card p {
+    color: var(--gray);
+    line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 30px 20px;
+    }
+    
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-description {
+        font-size: 1rem;
+    }
+    
+    .filters-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+    
+    .filters {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .info-section {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Голосование
+    document.querySelectorAll('.btn-vote').forEach(button => {
+        button.addEventListener('click', async function() {
+            const initiativeId = this.getAttribute('data-init-id');
+            const voteValue = parseInt(this.getAttribute('data-vote-value'));
+            
+            try {
+                const response = await fetch('/api/vote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        initiative_id: parseInt(initiativeId),
+                        vote: voteValue
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    if (data.message.includes('Не авторизован')) {
+                        window.location.href = '/login';
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                }
+            } catch (error) {
+                alert('Ошибка соединения с сервером');
+            }
+        });
+    });
+
+    // Поиск
+    const searchInput = document.getElementById('searchInput');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    
+    if (searchInput && applyFiltersBtn) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    
+    function applyFilters() {
+        const query = searchInput ? searchInput.value.trim() : '';
+        const sortBy = document.getElementById('sortSelect') ? 
+                      document.getElementById('sortSelect').value : 'newest';
+        
+        let url = `/?page=1`;
+        
+        if (query) {
+            url += `&search=${encodeURIComponent(query)}`;
+        }
+        
+        if (sortBy !== 'newest') {
+            url += `&sort=${sortBy}`;
+        }
+        
+        window.location.href = url;
+    }
+});
+</script>
+{% endblock %}
