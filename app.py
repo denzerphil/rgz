@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here_change_this_in_production'
-DATABASE = '/home/denzerphil/rgz/app.db'
+DATABASE = 'instance/app.db'
 
 def get_db():
     db = getattr(g, '_database', None)
